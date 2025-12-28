@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -euo pipefail
+
+if [[ $# -ge 1 ]]; then
+  CHOICE="$1"
+else
+  CHOICE=$(zenity \
+    --list \
+    --title="Select Monitor Input" \
+    --text="Choose input source for ASUS XG279Q:" \
+    --radiolist \
+    --column="" --column="Input" \
+    TRUE  "DisplayPort 1" \
+    FALSE "HDMI 1" \
+    FALSE "HDMI 2")
+fi
+
+case "$CHOICE" in
+  dp1|"DisplayPort 1")
+    VALUE=0x0f
+    ;;
+  hdmi1|"HDMI 1")
+    VALUE=0x11
+    ;;
+  hdmi2|"HDMI 2")
+    VALUE=0x12
+    ;;
+  *)
+    exit 0  # user cancelled
+    ;;
+esac
+
+# detect bus id
+BUS_ID="$(ddcutil detect 2> /dev/null | grep "\(I2C bus\|Model\)" | grep XG279Q -B 1 | grep "I2C bus" | cut -f 2 -d ':' | awk '{print $1}' | sed 's#/dev/i2c-##')"
+if [[ "${BUS_ID}" == "" ]]; then 
+  echo "Cannot find monitor"
+  exit 1
+fi
+echo "Monitor found on bus #${BUS_ID}"
+
+ddcutil setvcp 60 "$VALUE" --bus "$BUS_ID"
