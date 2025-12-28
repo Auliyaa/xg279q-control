@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=XG279Q
+Comment=Switch inputs on XG279Q display
+Exec=/home/auliyaa/dev/my-bash/xg279q-control/xg279q-control
+Icon=video-display
+Terminal=false
+Categories=Utility;
