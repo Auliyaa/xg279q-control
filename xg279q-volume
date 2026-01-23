@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+MODEL=XG279Q
+VCP_VOLUME=0x62
+MIN=0
+MAX=100
+
+# Detect I2C bus for the monitor
+BUS_ID="$(ddcutil detect 2> /dev/null | grep "\(I2C bus\|Model\)" | grep $MODEL -B 1 | grep "I2C bus" | cut -f 2 -d ':' | awk '{print $1}' | sed 's#/dev/i2c-##')"
+
+if [[ -z "$BUS_ID" ]]; then
+  echo "Cannot find monitor ($MODEL)"
+  exit 1
+fi
+
+# Get current volume
+get_current_volume() {
+  ddcutil getvcp 0x62 --bus "$BUS_ID" | sed -n 's/.*Volume level:[[:space:]]*\([0-9]\+\).*/\1/p'
+}
+
+# Clamp helper
+clamp() {
+  (( $1 < MIN )) && echo "$MIN" && return
+  (( $1 > MAX )) && echo "$MAX" && return
+  echo "$1"
+}
+
+# GUI mode (no args)
+CURRENT="$(get_current_volume)"
+
+NEW=$(zenity --scale \
+--title="Monitor Volume" \
+--text="Set speaker volume for ASUS $MODEL" \
+--min-value="$MIN" \
+--max-value="$MAX" \
+--value="$CURRENT")
+
+[[ -z "$NEW" ]] && exit 0
+ddcutil setvcp "$VCP_VOLUME" "$NEW" --bus "$BUS_ID"
+exit 0

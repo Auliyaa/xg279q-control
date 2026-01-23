@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=XG279Q Volume
+Comment=Change volume on XG279Q display
+Exec=/home/auliyaa/dev/auliyaarc/xg279q-control/xg279q-volume
+Icon=video-display
+Terminal=false
+Categories=Utility;
