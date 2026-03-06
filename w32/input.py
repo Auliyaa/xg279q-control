@@ -6,56 +6,67 @@ from monitorcontrol import get_monitors, Monitor, InputSource
 
 MON_DELAY = 0.2
 
+
 def find_monitor(id: str) -> Monitor:
-    for monitor in get_monitors():
-        with monitor:
-            time.sleep(MON_DELAY)
-            try:
+    print("Scanning monitors...")
+    for i, monitor in enumerate(get_monitors()):
+        print(f"Checking monitor {i}...")
+        try:
+            with monitor:
+                time.sleep(MON_DELAY)
                 caps = monitor.get_vcp_capabilities()
-                print(caps)
-                if id in caps["model"]:
+                print("Capabilities:", caps)
+                if id in caps.get("model", ""):
+                    print("Target monitor found.")
                     return monitor
-            except Exception as e:
-                print(e)
-                continue
+        except Exception as e:
+            print("Error reading monitor:", e)
+            continue
     return None
+
 
 def get_input_source(mon: Monitor) -> int:
     time.sleep(MON_DELAY)
     return mon.get_input_source()
 
+
 def set_input_source(mon: Monitor, id: int):
     time.sleep(MON_DELAY)
     mon.set_input_source(id)
 
+
 def main():
+    print("Script started.")
     parser = argparse.ArgumentParser(description="Switch monitor input source.")
     parser.add_argument(
         "--input",
         choices=["dp1", "hdmi1", "hdmi2"],
-        help="Input source to switch to (dp1 or hdmi2).",
         required=True,
     )
     args = parser.parse_args()
 
-    target_input = args.input
+    print("Requested input:", args.input)
+
     monitor = find_monitor("XG279")
     if not monitor:
         print("Monitor not found.")
         return
 
-    current = get_input_source(monitor)
-    print(f"Current input source: {current}")
+    print("Opening monitor context...")
+    with monitor:
+        current = get_input_source(monitor)
+        print(f"Current input source: {current}")
 
-    if target_input == "dp1":
-        set_input_source(monitor, InputSource.DP1)
-        print("Switched to DisplayPort 1.")
-    elif target_input == "hdmi1":
-        set_input_source(monitor, InputSource.HDMI1)
-        print("Switched to HDMI 1.")
-    elif target_input == "hdmi2":
-        set_input_source(monitor, InputSource.HDMI2)
-        print("Switched to HDMI 2.")
+        mapping = {
+            "dp1": InputSource.DP1,
+            "hdmi1": InputSource.HDMI1,
+            "hdmi2": InputSource.HDMI2,
+        }
+
+        print("Switching input...")
+        set_input_source(monitor, mapping[args.input])
+        print("Switch complete.")
+
 
 if __name__ == "__main__":
     main()
